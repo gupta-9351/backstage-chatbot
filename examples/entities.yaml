@@ -1,0 +1,316 @@
+---
+# Small local demo catalog
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: example-system
+  description: Example system for local catalog
+spec:
+  owner: guests
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: finance-system
+  description: System for finance-related services
+spec:
+  owner: finance-team
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: sales-system
+  description: System for sales and commerce workflows
+spec:
+  owner: sales-team
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: platform-system
+  description: Shared platform and infrastructure systems
+spec:
+  owner: platform-team
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: website-service
+  description: Local example website service
+spec:
+  type: website
+  lifecycle: experimental
+  owner: guests
+  system: example-system
+  providesApis: [example-rest-api]
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: billing-service
+  description: Local example billing service
+spec:
+  type: service
+  lifecycle: production
+  owner: finance-team
+  system: finance-system
+  consumesApis: [payment-api]
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: auth-service
+  description: Authentication service for user login
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: platform-system
+  providesApis: [auth-api]
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: notifications-service
+  description: Notification delivery service
+spec:
+  type: service
+  lifecycle: experimental
+  owner: platform-team
+  system: platform-system
+  providesApis: [notifications-api]
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: search-service
+  description: Search service for internal tools
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: platform-system
+  providesApis: [search-api]
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: mobile-app
+  description: Local example mobile app
+spec:
+  type: library
+  lifecycle: experimental
+  owner: sales-team
+  system: sales-system
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: docs-site
+  description: Local example docs site
+spec:
+  type: documentation
+  lifecycle: production
+  owner: platform-team
+  system: platform-system
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: payment-gateway
+  description: Local example payment gateway service
+spec:
+  type: service
+  lifecycle: production
+  owner: finance-team
+  system: finance-system
+  consumesApis: [payment-api]
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: customer-portal
+  description: Customer-facing portal for sales and support
+spec:
+  type: website
+  lifecycle: experimental
+  owner: sales-team
+  system: sales-system
+  consumesApis: [auth-api]
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: example-rest-api
+  description: Local example REST API
+spec:
+  type: openapi
+  lifecycle: production
+  owner: guests
+  system: example-system
+  definition: |
+    openapi: 3.0.0
+    info:
+      title: Example REST API
+      version: 1.0.0
+    paths:
+      /health:
+        get:
+          summary: Health check
+          responses:
+            '200':
+              description: OK
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: payment-api
+  description: Payment API for billing operations
+spec:
+  type: openapi
+  lifecycle: production
+  owner: finance-team
+  system: finance-system
+  definition: |
+    openapi: 3.0.0
+    info:
+      title: Payment API
+      version: 1.0.0
+    paths:
+      /charge:
+        post:
+          summary: Charge a customer
+          responses:
+            '200':
+              description: Charged
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: auth-api
+  description: Authentication API for login and user sessions
+spec:
+  type: openapi
+  lifecycle: production
+  owner: platform-team
+  system: platform-system
+  definition: |
+    openapi: 3.0.0
+    info:
+      title: Auth API
+      version: 1.0.0
+    paths:
+      /login:
+        post:
+          summary: Login user
+          responses:
+            '200':
+              description: OK
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: notifications-api
+  description: API for notification events and delivery
+spec:
+  type: event-stream
+  lifecycle: experimental
+  owner: platform-team
+  system: platform-system
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: search-api
+  description: Search API for internal requests
+spec:
+  type: openapi
+  lifecycle: production
+  owner: platform-team
+  system: platform-system
+  definition: |
+    openapi: 3.0.0
+    info:
+      title: Search API
+      version: 1.0.0
+    paths:
+      /query:
+        get:
+          summary: Search query
+          responses:
+            '200':
+              description: Results
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: postgres-db
+  description: PostgreSQL database for transactional data
+spec:
+  type: database
+  owner: platform-team
+  system: platform-system
+  dependsOn:
+    - api:default/payment-api
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: redis-cache
+  description: Redis caching layer
+spec:
+  type: cache
+  owner: platform-team
+  system: platform-system
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: rabbitmq-broker
+  description: Message broker for asynchronous events
+spec:
+  type: messaging
+  owner: platform-team
+  system: platform-system
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: billing-storage
+  description: Object storage for billing documents
+spec:
+  type: storage
+  owner: finance-team
+  system: finance-system
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: example-location
+  description: Local file location used for demo purposes
+spec:
+  type: file
+  target: ./location-target.yaml
+

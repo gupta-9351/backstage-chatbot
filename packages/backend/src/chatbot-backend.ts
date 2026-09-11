@@ -4,6 +4,7 @@ import { CatalogService } from './catalogService';
 // import { OpenAIService } from './openaiService';
 import { GeminiService } from './geminiService';
 import { buildCatalogPrompt } from './promptBuilder';
+import { RedisService } from './redisService';
 
 type ChatbotQueryRequest = {
     sessionId?: string;
@@ -61,7 +62,15 @@ export default createBackendPlugin({
             },
             async init({ httpRouter, discovery, logger, rootConfig, auth }) {
                 const router = express.Router();
-                const catalogService = new CatalogService(discovery, auth, logger); // pass auth
+                // const catalogService = new CatalogService(discovery, auth, logger); // pass auth
+            const redisService = new RedisService();
+
+            const catalogService = new CatalogService(
+                discovery,
+                auth,
+                logger,
+                redisService,
+            );
                 // const openaiService = new OpenAIService(rootConfig);
                 const geminiService = new GeminiService(rootConfig);
 

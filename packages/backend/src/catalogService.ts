@@ -1,6 +1,7 @@
 import { CatalogClient } from '@backstage/catalog-client';
 import type { AuthService, DiscoveryService, LoggerService } from '@backstage/backend-plugin-api';
 import type { CompoundEntityRef, Entity } from '@backstage/catalog-model';
+import { RedisService } from './redisService';
 
 export class CatalogService {
   private readonly client: CatalogClient;
@@ -9,6 +10,7 @@ export class CatalogService {
     discoveryService: DiscoveryService,
     private readonly auth: AuthService,
     private readonly logger?: LoggerService,
+    private readonly redis: RedisService,
   ) {
     this.client = new CatalogClient({
       discoveryApi: {
@@ -25,12 +27,44 @@ export class CatalogService {
     return token;
   }
 
+  // async getAllEntities(): Promise<Entity[]> {
+  //   const token = await this.getCatalogToken();
+  //   const response = await this.client.getEntities({}, { token });
+  //   return response.items;
+  // }
+
   async getAllEntities(): Promise<Entity[]> {
+  const cacheKey = 'catalog:all-entities';
+
+  try {
+    const cached = await this.redis.get(cacheKey);
+
+    if (cached) {
+      this.logger?.info('Catalog cache hit');
+      return JSON.parse(cached) as Entity[];
+    }
+
+    this.logger?.info('Catalog cache miss');
+
     const token = await this.getCatalogToken();
     const response = await this.client.getEntities({}, { token });
+
+    await this.redis.set(
+      cacheKey,
+      JSON.stringify(response.items),
+      300,
+    );
+
+    return response.items;
+  } catch (error) {
+    this.logger?.error(`Redis/catalog cache error: ${error}`);
+
+    const token = await this.getCatalogToken();
+    const response = await this.client.getEntities({}, { token });
+
     return response.items;
   }
-
+}
   async getEntitiesByKind(kind: string): Promise<Entity[]> {
     const token = await this.getCatalogToken();
     const response = await this.client.getEntities({ filter: [{ kind }] }, { token });
